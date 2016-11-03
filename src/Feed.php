@@ -21,15 +21,16 @@ class Feed
 
 	/**
 	 * Loads RSS or Atom feed.
-	 * @param  string
-	 * @param  string
-	 * @param  string
+	 * @param  string  RSS feed URL
+	 * @param  string  optional user name
+	 * @param  string  optional password
+	 * @param  string  optional user agent
 	 * @return Feed
 	 * @throws FeedException
 	 */
-	public static function load($url, $user = NULL, $pass = NULL)
+	public static function load($url, $user = NULL, $pass = NULL, $userAgent = NULL)
 	{
-		$xml = self::loadXml($url, $user, $pass);
+		$xml = self::loadXml($url, $user, $pass, $userAgent);
 		if ($xml->channel) {
 			return self::fromRss($xml);
 		} else {
@@ -43,12 +44,13 @@ class Feed
 	 * @param  string  RSS feed URL
 	 * @param  string  optional user name
 	 * @param  string  optional password
+	 * @param  string  optional user agent
 	 * @return Feed
 	 * @throws FeedException
 	 */
-	public static function loadRss($url, $user = NULL, $pass = NULL)
+	public static function loadRss($url, $user = NULL, $pass = NULL, $userAgent = NULL)
 	{
-		return self::fromRss(self::loadXml($url, $user, $pass));
+		return self::fromRss(self::loadXml($url, $user, $pass, $userAgent));
 	}
 
 
@@ -57,12 +59,13 @@ class Feed
 	 * @param  string  Atom feed URL
 	 * @param  string  optional user name
 	 * @param  string  optional password
+	 * @param  string  optional user agent
 	 * @return Feed
 	 * @throws FeedException
 	 */
-	public static function loadAtom($url, $user = NULL, $pass = NULL)
+	public static function loadAtom($url, $user = NULL, $pass = NULL, $userAgent = NULL)
 	{
-		return self::fromAtom(self::loadXml($url, $user, $pass));
+		return self::fromAtom(self::loadXml($url, $user, $pass, $userAgent));
 	}
 
 
@@ -165,10 +168,11 @@ class Feed
 	 * @param  string
 	 * @param  string
 	 * @param  string
+	 * @param  string
 	 * @return SimpleXMLElement
 	 * @throws FeedException
 	 */
-	private static function loadXml($url, $user, $pass)
+	private static function loadXml($url, $user, $pass, $userAgent)
 	{
 		$e = self::$cacheExpire;
 		$cacheFile = self::$cacheDir . '/feed.' . md5(serialize(func_get_args())) . '.xml';
@@ -178,7 +182,7 @@ class Feed
 			&& $data = @file_get_contents($cacheFile)
 		) {
 			// ok
-		} elseif ($data = trim(self::httpRequest($url, $user, $pass))) {
+		} elseif ($data = trim(self::httpRequest($url, $user, $pass, $userAgent))) {
 			if (self::$cacheDir) {
 				file_put_contents($cacheFile, $data);
 			}
@@ -197,16 +201,20 @@ class Feed
 	 * @param  string
 	 * @param  string
 	 * @param  string
+	 * @param  string
 	 * @return string|FALSE
 	 * @throws FeedException
 	 */
-	private static function httpRequest($url, $user, $pass)
+	private static function httpRequest($url, $user, $pass, $userAgent)
 	{
 		if (extension_loaded('curl')) {
 			$curl = curl_init();
 			curl_setopt($curl, CURLOPT_URL, $url);
 			if ($user !== NULL || $pass !== NULL) {
 				curl_setopt($curl, CURLOPT_USERPWD, "$user:$pass");
+			}
+			if ($userAgent) {
+				curl_setopt($curl, CURLOPT_USERAGENT, $userAgent);
 			}
 			curl_setopt($curl, CURLOPT_HEADER, FALSE);
 			curl_setopt($curl, CURLOPT_TIMEOUT, 20);

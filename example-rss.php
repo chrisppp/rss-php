@@ -7,7 +7,8 @@ if (!ini_get('date.timezone')) {
 
 require_once 'src/Feed.php';
 
-$rss = Feed::loadRss('http://phpfashion.com/feed/rss');
+$ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36';
+$rss = Feed::load('http://jackruns.blog.pl/feed/', null, null, $ua);
 
 ?>
 
